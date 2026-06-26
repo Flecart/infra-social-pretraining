@@ -5,6 +5,41 @@ Spin a single `p5e.48xlarge` (8× NVIDIA H200) DLAMI node up and down on demand.
 > ⚠️ **Cost:** ~$30–40/hour while running. There is **no smaller P5e size** — you
 > get all 8 GPUs. Always `make down` or `make stop` when you're finished.
 
+## What this stack requests
+
+This module launches one **`p5e.48xlarge`**:
+
+| Spec | Value |
+|------|-------|
+| GPUs | 8× NVIDIA **H200** (141 GB each, 1128 GB total) |
+| vCPUs / RAM | 192 vCPUs / 2 TB |
+| GPU interconnect | NVLink + NVSwitch |
+| On-demand price | ~**$30–40/hr** (region-dependent) |
+| Sizes available | **only** the full 8-GPU node — no 1/2/4-GPU variants |
+
+### GPU instance reference (for picking a different `instance_type`)
+
+Approximate **on-demand** prices, largest size, `us-east-1`, Linux. These move over
+time and by region — check the [EC2 pricing page](https://aws.amazon.com/ec2/pricing/on-demand/)
+for exact numbers. Single-GPU `xlarge` sizes of the **G** families cost a small
+fraction of these and are good for dev/inference.
+
+| Family | GPU | Largest size | ~On-demand $/hr |
+|--------|-----|--------------|------------------|
+| P5e | 8× H200 | p5e.48xlarge | ~$30–40 ← **this stack** |
+| P5 | 8× H100 | p5.48xlarge | ~$31–55 |
+| P4 | 8× A100 | p4d.24xlarge | ~$32 |
+| P3 | 8× V100 | p3.16xlarge | ~$24.48 |
+| G6e | 8× L40S | g6e.48xlarge | ~$30 (1× ≈ $1.86) |
+| G6 | 8× L4 | g6.48xlarge | ~$13.35 (1× ≈ $0.80) |
+| G5 | 8× A10G | g5.48xlarge | ~$16.29 (1× ≈ $1.00) |
+| G4dn | 1–4× T4 | g4dn.12xlarge | 1× ≈ $0.53 |
+
+> The newest **P6** (Blackwell B200/B300/GB200) instances are typically sold via
+> Capacity Blocks / reservations rather than plain on-demand. To use any of these,
+> set `instance_type` in `terraform.tfvars` (and note only the P5/P4 families are
+> sold exclusively as full 8-GPU nodes).
+
 ## Setup
 
 ```bash
@@ -161,10 +196,13 @@ those CIDRs, or your own `/32`, to the list. To find an address's range:
 
 ## Important notes on p5e
 
-- **Capacity:** p5e is scarce. A plain on-demand launch often fails with
-  `InsufficientInstanceCapacity`. Reserve capacity via **EC2 Capacity Blocks for
-  ML** (or an On-Demand Capacity Reservation) and pass its id as
-  `capacity_reservation_id`.
+- **Capacity (REQUIRED):** p5e **cannot** be launched as plain on-demand —
+  `RunInstances` returns `Unsupported: The requested configuration is currently
+  not supported`. You must purchase an **EC2 Capacity Block for ML**, then set
+  both `capacity_reservation_id = "cr-..."` and `capacity_block = true` (the
+  latter adds the required `market_type = capacity-block`). For a standard
+  On-Demand Capacity Reservation instead, set the id but leave `capacity_block`
+  false.
 - **Quota:** you need a non-zero service quota for *Running On-Demand P instances*
   (measured in vCPUs — p5e.48xlarge = 192 vCPUs). Request it in Service Quotas.
 - **Region:** only some regions offer p5e (e.g. us-east-1, us-east-2, us-west-2).
