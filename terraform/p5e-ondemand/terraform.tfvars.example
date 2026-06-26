@@ -32,7 +32,10 @@ users = [
   },
 ]
 
-# Recommended for p5e — capacity is scarce. Reserve via EC2 Capacity Blocks for ML.
+# REQUIRED for p5e: it cannot launch as plain on-demand. Purchase an EC2 Capacity
+# Block for ML, then set its reservation id and flip capacity_block = true.
+# For a standard On-Demand Capacity Reservation, set the id but leave capacity_block = false.
 # capacity_reservation_id = "cr-0123456789abcdef0"
+# capacity_block          = true
 
 running = true # set false to stop (keep data), or run `terraform destroy` to remove

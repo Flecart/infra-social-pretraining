@@ -169,11 +169,27 @@ resource "aws_instance" "this" {
     }
   }
 
+  # Capacity Blocks for ML require this market type. p5e/p5/p4d generally CANNOT
+  # launch as plain on-demand (RunInstances returns "Unsupported"), so a block is
+  # mandatory. Leave capacity_block=false for a standard On-Demand Capacity
+  # Reservation, which does not use a market type.
+  dynamic "instance_market_options" {
+    for_each = var.capacity_block ? [1] : []
+    content {
+      market_type = "capacity-block"
+    }
+  }
+
   tags = { Name = var.name }
 
-  # Toggling `running` should not force a replace.
   lifecycle {
+    # Toggling `running` should not force a replace.
     ignore_changes = [ami]
+
+    precondition {
+      condition     = !var.capacity_block || var.capacity_reservation_id != null
+      error_message = "capacity_block = true requires capacity_reservation_id to be set to the Capacity Block's reservation id (cr-...)."
+    }
   }
 }
 

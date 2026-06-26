@@ -88,9 +88,15 @@ variable "data_volume_device" {
 }
 
 variable "capacity_reservation_id" {
-  description = "Optional On-Demand Capacity Reservation or Capacity Block ID. p5e capacity is scarce; plain on-demand launches often fail with InsufficientInstanceCapacity. Leave null to try open on-demand."
+  description = "On-Demand Capacity Reservation or Capacity Block reservation id (cr-...). p5e cannot launch as plain on-demand, so for p5e this is effectively required. Leave null only for instance types that do support open on-demand."
   type        = string
   default     = null
+}
+
+variable "capacity_block" {
+  description = "Set true when capacity_reservation_id refers to a Capacity Block for ML (adds the required market_type=capacity-block). Leave false for a standard On-Demand Capacity Reservation."
+  type        = bool
+  default     = false
 }
 
 variable "subnet_id" {
