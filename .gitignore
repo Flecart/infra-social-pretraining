@@ -1,0 +1,20 @@
+data/
+webapp/data.js
+batch*.json
+__pycache__/
+*.pyc
+
+# secrets / local env
+.env
+*.log
+
+# terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json

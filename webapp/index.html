@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Researcher Map — who's who in CS subfields</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#171c24; --panel2:#1f2733; --line:#2a3340;
+    --text:#e6edf3; --muted:#8b97a7; --accent:#5aa9ff; --accent2:#7ee0a7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--text)}
+  header{padding:20px 28px;border-bottom:1px solid var(--line);display:flex;
+         align-items:baseline;gap:16px;flex-wrap:wrap}
+  header h1{font-size:20px;margin:0}
+  header .meta{color:var(--muted);font-size:12px}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 28px}
+  .controls{display:flex;gap:16px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+  .toggle{display:flex;background:var(--panel2);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .toggle button{background:none;border:0;color:var(--muted);padding:7px 14px;cursor:pointer;font-size:13px}
+  .toggle button.active{background:var(--accent);color:#06121f;font-weight:600}
+  input[type=search]{background:var(--panel2);border:1px solid var(--line);color:var(--text);
+       padding:8px 12px;border-radius:8px;min-width:240px;flex:1}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;
+        cursor:pointer;transition:.15s;position:relative}
+  .card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .card h3{margin:0 0 4px;font-size:16px}
+  .card .desc{color:var(--muted);font-size:12px;min-height:48px}
+  .bignum{font-size:30px;font-weight:700;color:var(--accent2)}
+  .bar{height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;margin-top:10px}
+  .bar > span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .row2{display:flex;gap:18px;color:var(--muted);font-size:12px;margin-top:6px}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}
+  th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+  td.num,th.num{text-align:right}
+  .rank{color:var(--muted);width:30px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .back{background:none;border:1px solid var(--line);color:var(--text);padding:6px 12px;
+        border-radius:8px;cursor:pointer;margin-bottom:16px}
+  .pill{display:inline-block;background:var(--panel2);border:1px solid var(--line);
+        border-radius:20px;padding:2px 10px;font-size:11px;color:var(--muted);margin-left:8px}
+  .empty{color:var(--muted);padding:30px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+  .tabs{display:flex;gap:8px;margin:16px 0}
+  .tabs button{background:var(--panel2);border:1px solid var(--line);color:var(--muted);
+       padding:6px 14px;border-radius:8px;cursor:pointer}
+  .tabs button.active{color:var(--text);border-color:var(--accent)}
+  .author-papers{color:var(--muted);font-size:12px}
+  section{display:none}
+  section.active{display:block}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗺️ Researcher Map</h1>
+  <span class="meta" id="meta"></span>
+</header>
+<div class="wrap">
+  <div class="controls">
+    <div class="toggle" id="viewToggle">
+      <button data-view="candidate" class="active">Candidates (seed)</button>
+      <button data-view="reviewed">Reviewed</button>
+    </div>
+    <input type="search" id="search" placeholder="Search a researcher across all fields…">
+  </div>
+
+  <section id="overview" class="active"></section>
+  <section id="detail"></section>
+  <section id="searchResults"></section>
+</div>
+
+<script src="data.js"></script>
+<script>
+const D = window.DATA || {categories:[]};
+let view = "candidate";
+
+const $ = s => document.querySelector(s);
+const el = (t,c,h) => { const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e; };
+const yrs = a => a.year_min ? (a.year_min===a.year_max? a.year_min : a.year_min+"–"+a.year_max) : "—";
+
+$("#meta").textContent =
+  `${D.total_papers||0} papers · ${D.total_authors||0} researchers · `
+  + `${D.total_reviewed||0} reviewed · built ${D.generated_at||"?"}`;
+
+function show(id){ document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  $("#"+id).classList.add("active"); window.scrollTo(0,0); }
+
+function renderOverview(){
+  const host = $("#overview"); host.innerHTML="";
+  const max = Math.max(1, ...D.categories.map(c=>c[view].researcher_count));
+  const grid = el("div","grid");
+  D.categories.forEach(c=>{
+    const v = c[view];
+    const card = el("div","card");
+    card.appendChild(el("h3",null,c.label));
+    card.appendChild(el("div","desc",c.description));
+    card.appendChild(el("div","bignum",v.researcher_count.toLocaleString()));
+    card.appendChild(el("div",null,"<span style='color:var(--muted);font-size:12px'>researchers</span>"));
+    const bar = el("div","bar"); bar.appendChild(el("span",null,""));
+    bar.firstChild.style.width = (100*v.researcher_count/max)+"%"; card.appendChild(bar);
+    card.appendChild(el("div","row2",`<span>${v.paper_count.toLocaleString()} papers</span>`));
+    card.onclick=()=>openCategory(c.id);
+    grid.appendChild(card);
+  });
+  host.appendChild(grid);
+}
+
+let detailTab = "authors";
+function openCategory(id){
+  const c = D.categories.find(x=>x.id===id); const v=c[view];
+  const host=$("#detail"); host.innerHTML="";
+  const back=el("button","back","← all fields"); back.onclick=()=>{show("overview");}; host.appendChild(back);
+  host.appendChild(el("h2",null,c.label+`<span class="pill">${view}</span>`));
+  host.appendChild(el("div","desc",c.description));
+  host.appendChild(el("div","row2",
+    `<span><b>${v.researcher_count}</b> researchers</span><span><b>${v.paper_count}</b> papers</span>`));
+
+  const tabs=el("div","tabs");
+  const tA=el("button",detailTab==="authors"?"active":"","Top researchers");
+  const tP=el("button",detailTab==="papers"?"active":"","Top papers");
+  tabs.appendChild(tA); tabs.appendChild(tP); host.appendChild(tabs);
+  const body=el("div"); host.appendChild(body);
+
+  function drawAuthors(){
+    body.innerHTML="";
+    if(!v.authors.length){ body.appendChild(el("div","empty","No data in this view yet.")); return; }
+    const t=el("table");
+    t.innerHTML="<tr><th class='rank'>#</th><th>Researcher</th><th class='num'>Papers</th>"
+      +"<th class='num'>Citations</th><th class='num'>Active</th></tr>";
+    v.authors.forEach((a,i)=>{
+      const tr=el("tr");
+      tr.innerHTML=`<td class='rank'>${i+1}</td>`
+        +`<td><a href="https://www.semanticscholar.org/author/${a.author_id}" target="_blank">${a.name||"?"}</a></td>`
+        +`<td class='num'>${a.papers}</td><td class='num'>${(a.citations||0).toLocaleString()}</td>`
+        +`<td class='num'>${yrs(a)}</td>`;
+      t.appendChild(tr);
+    });
+    body.appendChild(t);
+  }
+  function drawPapers(){
+    body.innerHTML="";
+    if(!v.papers.length){ body.appendChild(el("div","empty","No data in this view yet.")); return; }
+    const t=el("table");
+    t.innerHTML="<tr><th>Title</th><th class='num'>Year</th><th class='num'>Citations</th></tr>";
+    v.papers.forEach(p=>{
+      const tr=el("tr");
+      tr.innerHTML=`<td><a href="${p.url||'https://www.semanticscholar.org/paper/'+p.paper_id}" target="_blank">${p.title||"(untitled)"}</a>`
+        +(p.venue?` <span class='author-papers'>· ${p.venue}</span>`:"")+`</td>`
+        +`<td class='num'>${p.year||"—"}</td><td class='num'>${(p.citations||0).toLocaleString()}</td>`;
+      t.appendChild(tr);
+    });
+    body.appendChild(t);
+  }
+  tA.onclick=()=>{detailTab="authors";tA.classList.add("active");tP.classList.remove("active");drawAuthors();};
+  tP.onclick=()=>{detailTab="papers";tP.classList.add("active");tA.classList.remove("active");drawPapers();};
+  detailTab==="papers"?drawPapers():drawAuthors();
+  show("detail");
+}
+
+function runSearch(q){
+  q=q.trim().toLowerCase();
+  const host=$("#searchResults"); host.innerHTML="";
+  if(!q){ show("overview"); return; }
+  const back=el("button","back","← all fields"); back.onclick=()=>{$("#search").value="";show("overview");}; host.appendChild(back);
+  // gather author -> categories they appear in (current view)
+  const found={};
+  D.categories.forEach(c=>{
+    c[view].authors.forEach(a=>{
+      if((a.name||"").toLowerCase().includes(q)){
+        const k=a.author_id;
+        const e=found[k]||(found[k]={name:a.name,author_id:a.author_id,cats:[],papers:0,citations:0});
+        e.cats.push({label:c.label,papers:a.papers}); e.papers+=a.papers; e.citations=Math.max(e.citations,a.citations);
+      }
+    });
+  });
+  const list=Object.values(found).sort((a,b)=>b.papers-a.papers);
+  host.appendChild(el("h2",null,`Researchers matching “${q}” <span class="pill">${view}</span>`));
+  if(!list.length){ host.appendChild(el("div","empty","No matches in this view.")); show("searchResults"); return; }
+  const t=el("table");
+  t.innerHTML="<tr><th>Researcher</th><th>Fields</th><th class='num'>Papers</th></tr>";
+  list.forEach(a=>{
+    const tr=el("tr");
+    const cats=a.cats.sort((x,y)=>y.papers-x.papers).map(c=>`${c.label} (${c.papers})`).join(", ");
+    tr.innerHTML=`<td><a href="https://www.semanticscholar.org/author/${a.author_id}" target="_blank">${a.name}</a></td>`
+      +`<td class='author-papers'>${cats}</td><td class='num'>${a.papers}</td>`;
+    t.appendChild(tr);
+  });
+  host.appendChild(t); show("searchResults");
+}
+
+document.querySelectorAll("#viewToggle button").forEach(b=>{
+  b.onclick=()=>{ document.querySelectorAll("#viewToggle button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active"); view=b.dataset.view; renderOverview();
+    const q=$("#search").value; if(q.trim()) runSearch(q); };
+});
+let st; $("#search").addEventListener("input",e=>{clearTimeout(st);st=setTimeout(()=>runSearch(e.target.value),200);});
+
+renderOverview();
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+{
+  "_comment": "Map of CORE AI fields (broad) plus the user's niche interests (interpretability, multi-agent interpretability, AI policy, AI security, legal AI, AI safety). Each category has a label, a description (used by Claude when reviewing abstracts), and Semantic Scholar bulk-search queries that SEED the candidate pool. Bulk query syntax (be explicit!): + means AND, | means OR, - excludes, \"...\" is a phrase, * is a prefix wildcard, () groups. ALWAYS join required terms with + (a bare space does NOT reliably AND). Queries match title+abstract. Seed pools are intentionally broad/noisy; Claude's abstract review (review.py) is what makes them precise. Use collect.py --min-year to focus on currently-active researchers. Edit freely, then re-run collect.py.",
+  "categories": [
+    {
+      "id": "machine-learning-theory",
+      "label": "ML Theory & Optimization",
+      "description": "Foundations of machine learning: statistical learning theory, generalization bounds, PAC learning, optimization for ML (SGD, convergence), kernel methods, and theoretical analysis of learning algorithms.",
+      "queries": [
+        "(\"generalization bound\" | \"learning theory\" | \"statistical learning\") + (neural | \"machine learning\")",
+        "(optimization | \"gradient descent\" | convergence) + (\"deep learning\" | \"neural network\" | \"non-convex\")",
+        "(\"kernel method\" | \"PAC learning\" | \"sample complexity\" | \"generalization error\")"
+      ]
+    },
+    {
+      "id": "deep-learning",
+      "label": "Deep Learning (architectures & training)",
+      "description": "Neural network architectures and training methods: transformers, convolutional/recurrent nets, normalization, attention, self-supervised and representation learning, scaling laws. General deep learning not specific to one modality.",
+      "queries": [
+        "(transformer | \"self-attention\" | \"attention mechanism\") + (architecture | training | model)",
+        "(\"self-supervised\" | \"representation learning\" | \"contrastive learning\") + (neural | \"deep learning\")",
+        "(\"scaling laws\" | \"foundation model\" | pretraining) + (neural | transformer | \"deep learning\")"
+      ]
+    },
+    {
+      "id": "nlp-llm",
+      "label": "NLP & Large Language Models",
+      "description": "Natural language processing and large language models: language modeling, text generation, instruction tuning, in-context learning, reasoning in LLMs, machine translation, QA, summarization, evaluation of LLMs.",
+      "queries": [
+        "(\"large language model\" | LLM | \"language models\") + (reasoning | \"in-context\" | \"instruction tuning\" | evaluation)",
+        "(\"natural language processing\" | NLP) + (\"text generation\" | \"question answering\" | summarization | translation)",
+        "(\"language model\") + (pretraining | finetuning | prompting | benchmark)"
+      ]
+    },
+    {
+      "id": "computer-vision",
+      "label": "Computer Vision",
+      "description": "Visual understanding: image classification, object detection, semantic/instance segmentation, scene understanding, video understanding, 3D vision, image/video recognition.",
+      "queries": [
+        "(\"object detection\" | \"semantic segmentation\" | \"image classification\" | \"instance segmentation\")",
+        "(\"computer vision\" | \"visual recognition\" | \"scene understanding\") + (detection | segmentation | recognition)",
+        "(\"video understanding\" | \"3D vision\" | \"point cloud\" | \"depth estimation\")"
+      ]
+    },
+    {
+      "id": "generative-models",
+      "label": "Generative Models",
+      "description": "Generative modeling: diffusion models, GANs, VAEs, autoregressive generation, image/video/audio synthesis, text-to-image, flow-based models.",
+      "queries": [
+        "(\"diffusion model\" | \"denoising diffusion\" | \"score-based\") + (generation | image | generative)",
+        "(\"generative adversarial\" | GAN | \"variational autoencoder\" | VAE) + (generation | synthesis)",
+        "(\"text-to-image\" | \"image synthesis\" | \"video generation\" | \"generative model\")"
+      ]
+    },
+    {
+      "id": "reinforcement-learning",
+      "label": "Reinforcement Learning",
+      "description": "RL and sequential decision making: deep RL, policy gradients, Q-learning, model-based RL, offline RL, exploration, RL theory (single-agent; multi-agent RL goes under Multi-Agent Systems).",
+      "queries": [
+        "(\"reinforcement learning\") + (\"policy gradient\" | \"Q-learning\" | \"actor-critic\" | exploration)",
+        "(\"deep reinforcement learning\" | \"model-based RL\" | \"offline reinforcement learning\")",
+        "(\"reinforcement learning\") + (control | \"decision making\" | \"Markov decision\")"
+      ]
+    },
+    {
+      "id": "multimodal",
+      "label": "Multimodal Learning",
+      "description": "Models spanning multiple modalities: vision-language models, image-text, audio-visual, video-language, multimodal reasoning, CLIP-style and multimodal LLMs.",
+      "queries": [
+        "(\"vision-language\" | \"vision language\" | \"image-text\" | multimodal) + (model | learning | pretraining)",
+        "(\"multimodal large language model\" | \"visual question answering\" | \"image captioning\")",
+        "(\"audio-visual\" | \"video-language\" | \"cross-modal\") + (learning | model | representation)"
+      ]
+    },
+    {
+      "id": "speech-audio",
+      "label": "Speech & Audio",
+      "description": "Speech and audio AI: automatic speech recognition, text-to-speech, speaker recognition, audio generation, music/sound understanding.",
+      "queries": [
+        "(\"speech recognition\" | \"automatic speech recognition\" | ASR) + (neural | \"deep learning\" | model)",
+        "(\"text-to-speech\" | \"speech synthesis\" | \"voice conversion\" | \"speaker recognition\")",
+        "(\"audio\" | \"music\" | \"sound\") + (generation | classification | \"representation learning\")"
+      ]
+    },
+    {
+      "id": "robotics-embodied",
+      "label": "Robotics & Embodied AI",
+      "description": "Learning for robots and embodied agents: robot manipulation, navigation, imitation/robot learning, sim-to-real, embodied agents, vision-language-action models.",
+      "queries": [
+        "(\"robot learning\" | \"robotic manipulation\" | \"robot manipulation\") + (learning | policy | neural)",
+        "(\"embodied\" | \"vision-language-action\" | \"sim-to-real\") + (agent | robot | learning)",
+        "(\"imitation learning\" | \"motion planning\" | navigation) + (robot | \"reinforcement learning\")"
+      ]
+    },
+    {
+      "id": "graph-learning",
+      "label": "Graph Learning",
+      "description": "Learning on graphs: graph neural networks (GNNs), graph representation learning, message passing, node/link/graph-level tasks, geometric deep learning.",
+      "queries": [
+        "(\"graph neural network\" | \"graph convolutional\" | GNN | \"message passing\")",
+        "(\"graph representation learning\" | \"node classification\" | \"link prediction\" | \"graph embedding\")",
+        "(\"geometric deep learning\" | \"graph transformer\")"
+      ]
+    },
+    {
+      "id": "recommender-ir",
+      "label": "Information Retrieval & Recommendation",
+      "description": "Search, ranking, and recommendation: information retrieval, dense retrieval, recommender systems, learning to rank, RAG.",
+      "queries": [
+        "(\"information retrieval\" | \"dense retrieval\" | \"learning to rank\" | \"neural ranking\")",
+        "(\"recommender system\" | \"recommendation\" | \"collaborative filtering\")",
+        "(\"retrieval-augmented\" | RAG) + (generation | \"language model\")"
+      ]
+    },
+    {
+      "id": "ml-systems",
+      "label": "ML Systems & Efficiency",
+      "description": "Systems and efficiency for ML: efficient inference/training, model compression, quantization, distillation, distributed/parallel training, serving, hardware-aware ML.",
+      "queries": [
+        "(quantization | \"model compression\" | \"knowledge distillation\" | pruning) + (neural | \"language model\" | \"deep learning\")",
+        "(\"efficient inference\" | \"distributed training\" | \"parallel training\" | \"model serving\")",
+        "(\"mixture of experts\" | \"parameter-efficient\" | LoRA | \"efficient transformer\")"
+      ]
+    },
+    {
+      "id": "fairness-ethics",
+      "label": "Fairness, Bias & Ethics",
+      "description": "Fairness, bias, and ethics in AI: algorithmic fairness, bias measurement/mitigation, FAccT topics, ethics of AI, social impact (the technical/empirical side; pure governance goes under AI Policy).",
+      "queries": [
+        "(\"algorithmic fairness\" | \"fairness in machine learning\" | \"bias mitigation\") + (model | algorithm | learning)",
+        "(\"fairness\" | \"bias\" | \"discrimination\") + (\"machine learning\" | \"language model\" | algorithmic)",
+        "(\"AI ethics\" | \"ethics of artificial intelligence\" | \"responsible AI\")"
+      ]
+    },
+    {
+      "id": "knowledge-reasoning",
+      "label": "Knowledge & Reasoning",
+      "description": "Knowledge representation and reasoning: knowledge graphs, neuro-symbolic AI, logical/commonsense reasoning, automated reasoning, planning as reasoning.",
+      "queries": [
+        "(\"knowledge graph\" | \"knowledge base\") + (reasoning | embedding | completion)",
+        "(\"neuro-symbolic\" | \"neural-symbolic\" | \"commonsense reasoning\" | \"logical reasoning\")",
+        "(\"automated reasoning\" | \"symbolic reasoning\") + (neural | learning | AI)"
+      ]
+    },
+    {
+      "id": "agents-llm",
+      "label": "LLM Agents & Tool Use",
+      "description": "Autonomous LLM-based agents: tool use, planning, web/computer-use agents, agentic workflows, memory, single-agent autonomy (multi-agent coordination goes under Multi-Agent Systems).",
+      "queries": [
+        "(\"LLM agent\" | \"language model agent\" | \"autonomous agent\") + (\"tool use\" | planning | reasoning)",
+        "(\"agentic\" | \"tool-augmented\" | \"computer use\" | \"web agent\") + (\"language model\" | LLM)",
+        "(\"LLM\" | \"language model\") + agent + (memory | planning | \"tool use\" | benchmark)"
+      ]
+    },
+    {
+      "id": "multi-agent-systems",
+      "label": "Multi-Agent Systems",
+      "description": "Systems of multiple interacting agents: multi-agent reinforcement learning (MARL), coordination, emergent communication, cooperation, negotiation, multi-agent LLM collaboration.",
+      "queries": [
+        "(\"multi-agent reinforcement learning\" | \"multi-agent RL\" | MARL)",
+        "(\"multi-agent\") + (coordination | cooperation | \"emergent communication\" | negotiation)",
+        "(\"multi-agent\") + (\"language model\" | LLM) + (collaboration | debate | system)"
+      ]
+    },
+    {
+      "id": "interpretability",
+      "label": "Interpretability & Explainability",
+      "description": "Understanding model internals and decisions: mechanistic interpretability, circuits, features, sparse autoencoders, probing, attribution/saliency, concept-based and post-hoc explainability (mostly single-model).",
+      "queries": [
+        "\"mechanistic interpretability\" | \"sparse autoencoder\"",
+        "(interpretability | interpretable | explainability | explainable) + (\"large language model\" | \"neural network\" | \"deep learning\")",
+        "(\"feature attribution\" | saliency | probing | circuits | \"concept-based\") + (model | neural | interpretab*)"
+      ]
+    },
+    {
+      "id": "multi-agent-interpretability",
+      "label": "Multi-Agent Interpretability",
+      "description": "Understanding/explaining the internal behavior, communication, coordination, or emergent dynamics of MULTI-AGENT systems (esp. LLM agents): interpreting collusion, deception, negotiation, emergent communication. NOT generic single-model interpretability.",
+      "queries": [
+        "\"multi-agent\" + (interpretability | interpretable | explainability)",
+        "(\"multi-agent\" | \"agents\") + (collusion | deception | scheming) + (interpretability | monitoring | detect)",
+        "(\"LLM agents\" | \"language model agents\") + (interpretability | explainability | transparency)"
+      ]
+    },
+    {
+      "id": "ai-safety-alignment",
+      "label": "AI Safety & Alignment",
+      "description": "Technical AI safety and alignment: RLHF, scalable oversight, reward hacking, deceptive alignment, dangerous-capability evals, red-teaming, catastrophic risk mitigation.",
+      "queries": [
+        "\"AI alignment\" | \"AI safety\" | \"aligned AI\"",
+        "\"scalable oversight\" | \"reward hacking\" | \"specification gaming\" | \"deceptive alignment\"",
+        "(RLHF | \"reward model\" | \"human feedback\" | \"red teaming\") + (safety | alignment | oversight)"
+      ]
+    },
+    {
+      "id": "ai-security",
+      "label": "AI Security",
+      "description": "Security of AI/ML systems: adversarial attacks/defenses, jailbreaks, prompt injection, data poisoning, backdoors, model extraction, membership inference, security of LLM apps and agents.",
+      "queries": [
+        "(\"prompt injection\" | jailbreak | jailbreaking) + (\"language model\" | LLM)",
+        "adversarial + (attack | attacks | robustness) + (\"machine learning\" | \"neural network\" | \"deep learning\")",
+        "(\"data poisoning\" | backdoor | \"membership inference\" | \"model extraction\") + (\"neural network\" | model | learning)"
+      ]
+    },
+    {
+      "id": "ai-policy-governance",
+      "label": "AI Policy & Governance",
+      "description": "Governance, regulation, policy, standards, auditing, risk frameworks, and institutional/societal governance of AI (incl. EU AI Act, frontier model governance, evals for policy).",
+      "queries": [
+        "\"AI governance\" | \"governance of AI\" | \"AI Act\"",
+        "(\"artificial intelligence\" | \"AI\") + (policy | regulation | regulatory) + (governance | risk | compliance | standards)",
+        "(\"frontier\" + (model | AI)) + (governance | policy | regulation | oversight | audit)"
+      ]
+    },
+    {
+      "id": "legal-ai",
+      "label": "Legal AI",
+      "description": "AI applied to law and legal text: legal NLP, judgment/case prediction, contract analysis, statutory reasoning, legal QA, and scholarship on AI & law, liability, the law of AI.",
+      "queries": [
+        "(legal | law) + (\"natural language processing\" | NLP | \"language model\")",
+        "\"legal judgment prediction\" | \"legal reasoning\" | \"statutory reasoning\" | \"case prediction\"",
+        "(\"artificial intelligence\" | \"machine learning\") + (law | legal | liability) + (regulation | rights | accountability)"
+      ]
+    }
+  ]
+}
