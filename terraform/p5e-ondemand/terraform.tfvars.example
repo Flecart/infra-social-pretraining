@@ -1,0 +1,31 @@
+# Copy to terraform.tfvars and edit.
+aws_region       = "us-east-1"
+aws_profile      = "emanuele"
+allowed_ssh_cidr = "YOUR.IP.ADD.RESS/32" # find with: curl -s https://checkip.amazonaws.com
+public_key_path  = "~/.ssh/id_ed25519.pub" # key for the default `ubuntu` admin user
+
+# Human users. Each gets a home on the persistent /home volume that survives
+# every teardown. UIDs are PINNED — pick a unique one per user and never change
+# it once that user has data. Add/remove users here, then `make up`.
+users = [
+  {
+    name = "angelo"
+    uid  = 1001
+    sudo = true
+    ssh_authorized_keys = [
+      "ssh-ed25519 AAAA... angelo@laptop",
+    ]
+  },
+  {
+    name = "emanuele"
+    uid  = 1002
+    ssh_authorized_keys = [
+      "ssh-ed25519 AAAA... emanuele@laptop",
+    ]
+  },
+]
+
+# Recommended for p5e — capacity is scarce. Reserve via EC2 Capacity Blocks for ML.
+# capacity_reservation_id = "cr-0123456789abcdef0"
+
+running = true # set false to stop (keep data), or run `terraform destroy` to remove

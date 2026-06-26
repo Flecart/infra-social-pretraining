@@ -1,0 +1,103 @@
+#!/bin/bash
+set -euo pipefail
+
+###############################################################################
+# 1. Mount the persistent EBS volume at /home.
+#    p5e is Nitro, so the EBS volume shows up as an NVMe device; we locate it by
+#    its /dev/disk/by-id symlink (which encodes the volume id) and mount by
+#    filesystem label so device ordering never matters.
+###############################################################################
+VOL_ID="${volume_id}"
+SERIAL="vol$${VOL_ID#vol-}"                                   # vol-0abc123 -> vol0abc123
+DEV="/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_$${SERIAL}"
+
+for _ in $(seq 1 60); do
+  [ -e "$${DEV}" ] && break
+  sleep 2
+done
+
+# Format ONLY if the volume has no filesystem yet (first ever use).
+if ! blkid "$${DEV}" >/dev/null 2>&1; then
+  mkfs.ext4 -L userhome "$${DEV}"
+fi
+
+# First-use seeding: copy the AMI's existing /home (e.g. the default ubuntu
+# user's home) onto the volume before we mount over /home. Skipped forever after.
+mkdir -p /mnt/seed
+mount "$${DEV}" /mnt/seed
+if [ ! -e /mnt/seed/.seeded ]; then
+  rsync -aHAX --numeric-ids /home/ /mnt/seed/ 2>/dev/null || cp -a /home/. /mnt/seed/ 2>/dev/null || true
+  touch /mnt/seed/.seeded
+fi
+umount /mnt/seed
+
+mkdir -p /home
+if ! grep -q 'LABEL=userhome' /etc/fstab; then
+  echo "LABEL=userhome /home ext4 defaults,nofail 0 2" >> /etc/fstab
+fi
+mount -a
+
+###############################################################################
+# 2. Re-assert the default `ubuntu` user's key on the persistent home.
+#    (cloud-init wrote it to the root-disk /home/ubuntu, which is now shadowed.)
+###############################################################################
+mkdir -p /home/ubuntu/.ssh
+DEFAULT_KEY="${default_user_key}"
+touch /home/ubuntu/.ssh/authorized_keys
+grep -qxF "$${DEFAULT_KEY}" /home/ubuntu/.ssh/authorized_keys || echo "$${DEFAULT_KEY}" >> /home/ubuntu/.ssh/authorized_keys
+chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+chmod 700 /home/ubuntu/.ssh
+chmod 600 /home/ubuntu/.ssh/authorized_keys
+
+###############################################################################
+# 3. Declarative users. Recreated identically on every boot with PINNED UIDs so
+#    file ownership on the persistent volume is always valid. Homes that already
+#    exist on the volume are reused as-is (never overwritten / reformatted).
+###############################################################################
+create_user() {
+  local name="$1" uid="$2" want_sudo="$3"
+
+  # Per-user group with gid == uid (stable ownership across rebuilds).
+  if ! getent group "$${name}" >/dev/null; then
+    groupadd -g "$${uid}" "$${name}" 2>/dev/null || groupadd "$${name}"
+  fi
+
+  if ! id "$${name}" >/dev/null 2>&1; then
+    # -M: do not create/copy a home; the persistent one already exists (or we
+    # create it below). This avoids clobbering existing data.
+    useradd -u "$${uid}" -g "$${name}" -M -d "/home/$${name}" -s /bin/bash "$${name}" \
+      || useradd -g "$${name}" -M -d "/home/$${name}" -s /bin/bash "$${name}"
+  fi
+
+  if [ ! -d "/home/$${name}" ]; then
+    mkdir -p "/home/$${name}"
+    cp -a /etc/skel/. "/home/$${name}/" 2>/dev/null || true
+    chown -R "$${name}:$${name}" "/home/$${name}"
+    chmod 750 "/home/$${name}"
+  fi
+
+  if [ "$${want_sudo}" = "true" ]; then
+    usermod -aG sudo "$${name}"
+  fi
+}
+
+install_keys() {
+  local name="$1"; shift
+  local dir="/home/$${name}/.ssh"
+  local ak="$${dir}/authorized_keys"
+  mkdir -p "$${dir}"
+  : > "$${ak}"
+  for k in "$@"; do
+    [ -n "$${k}" ] && echo "$${k}" >> "$${ak}"
+  done
+  chown -R "$${name}:$${name}" "$${dir}"
+  chmod 700 "$${dir}"
+  chmod 600 "$${ak}"
+}
+
+%{ for u in users ~}
+create_user "${u.name}" "${u.uid}" "${u.sudo}"
+install_keys "${u.name}"${join("", [for k in u.ssh_authorized_keys : " \"${k}\""])}
+%{ endfor ~}
+
+echo "user_data: home volume mounted and ${length(users)} declared user(s) configured."
