@@ -9,7 +9,8 @@ Spin a single `p5e.48xlarge` (8× NVIDIA H200) DLAMI node up and down on demand.
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
-# edit: set allowed_ssh_cidr to "$(curl -s https://checkip.amazonaws.com)/32"
+# edit: set allowed_ssh_cidrs (your IP "$(curl -s https://checkip.amazonaws.com)/32"
+#       and/or institution ranges — see "SSH access" below)
 terraform init        # or: make init
 ```
 
@@ -138,6 +139,25 @@ Notes:
 guards `/home`. To truly delete it (and stop the small storage charge), remove
 `prevent_destroy = true` from `aws_ebs_volume.home` in `main.tf`, then run
 `terraform destroy`.
+
+## SSH access
+
+`allowed_ssh_cidrs` (a list) controls the security-group ingress on port 22. It's
+**fail-closed**: an empty list means nobody can SSH, so you must set it. Invalid
+entries are rejected at plan time by a validation rule.
+
+The committed `terraform.tfvars` allows the whois-verified **University of Oxford**
+and **ETH Zurich** campus ranges:
+
+| Institution | CIDR blocks |
+|-------------|-------------|
+| Oxford | `129.67.0.0/16`, `163.1.0.0/16`, `192.76.6.0/23`, `192.76.8.0/21`, `192.76.16.0/20`, `192.76.32.0/22` |
+| ETH Zurich | `129.132.0.0/16`, `195.176.96.0/19`, `192.33.87.0/24`, `192.33.88.0/21`, `192.33.96.0/21`, `192.33.104.0/22`, `192.33.108.0/23`, `192.33.110.0/24` |
+
+These cover the main campus allocations. Off-campus access (home/VPN that exits to
+a non-campus IP, eduroam at other sites, satellite buildings) won't match — add
+those CIDRs, or your own `/32`, to the list. To find an address's range:
+`whois <ip> | grep -iE 'inetnum|netname|org-name'`.
 
 ## Important notes on p5e
 

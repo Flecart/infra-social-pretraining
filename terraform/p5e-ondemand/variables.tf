@@ -58,10 +58,15 @@ variable "users" {
   }
 }
 
-variable "allowed_ssh_cidr" {
-  description = "CIDR allowed to SSH in. STRONGLY recommend locking to your own IP, e.g. \"203.0.113.4/32\"."
-  type        = string
-  default     = "0.0.0.0/0"
+variable "allowed_ssh_cidrs" {
+  description = "List of CIDR blocks allowed to SSH in (port 22). Fail-closed: defaults to empty (no access) so you must set it explicitly."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for c in var.allowed_ssh_cidrs : can(cidrnetmask(c))])
+    error_message = "Each allowed_ssh_cidrs entry must be a valid CIDR, e.g. \"129.67.0.0/16\" or \"1.2.3.4/32\"."
+  }
 }
 
 variable "root_volume_size" {

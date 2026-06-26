@@ -1,8 +1,15 @@
 # Copy to terraform.tfvars and edit.
-aws_region       = "us-east-1"
-aws_profile      = "emanuele"
-allowed_ssh_cidr = "YOUR.IP.ADD.RESS/32" # find with: curl -s https://checkip.amazonaws.com
-public_key_path  = "~/.ssh/id_ed25519.pub" # key for the default `ubuntu` admin user
+aws_region      = "us-east-1"
+aws_profile     = "emanuele"
+public_key_path = "~/.ssh/id_ed25519.pub" # key for the default `ubuntu` admin user
+
+# CIDR blocks allowed to SSH in. Fail-closed: empty = nobody. Use your own IP
+# ("$(curl -s https://checkip.amazonaws.com)/32") and/or institution ranges.
+allowed_ssh_cidrs = [
+  "129.67.0.0/16", # Oxford
+  "129.132.0.0/16", # ETH Zurich
+  # ... see README for the full Oxford + ETH list
+]
 
 # Human users. Each gets a home on the persistent /home volume that survives
 # every teardown. UIDs are PINNED — pick a unique one per user and never change
